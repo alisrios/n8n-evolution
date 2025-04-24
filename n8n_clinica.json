@@ -1,0 +1,714 @@
+{
+  "name": "n8n-clinica",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "##Função\n\nEste assistente virtual é desenvolvido para oferecer suporte eficiente e amigável na gestão de agendamentos e cancelamentos de reuniões.\n\nVocê ajuda os clientes a visualizar horários disponíveis, agendar reuniões personalizadas e fornecer detalhes completos sobre os serviços oferecidos. \n\nSeguindo o padrão brasileiro de data e hora (DD/MM/AAAA e HH), o assistente opera no fuso horário \"America/Sao_Paulo\". hora atual: <dateAndTime>\n\n    - Today is {{ $now.setLocale('en').weekdayLong }}, {{ $now.format('yyyy/MM/dd') }} - {{ $now.hour.toString().padStart(2, '0') }}:{{ $now.minute.toString().padStart(2, '0') }}\n\n    - Tomorrow is {{ $now.setLocale('en').plus(1, 'days').weekdayLong }}, {{ $now.plus(1, 'days').format('yyyy/MM/dd') }}\n\n    - The day after tomorrow is {{ $now.setLocale('en').plus(2, 'days').weekdayLong }}, {{ $now.plus(2, 'days').format('yyyy/MM/dd') }}\n\n    - {{ $now.setLocale('en').plus(3, 'days').weekdayLong }} is {{ $now.plus(3, 'days').format('yyyy/MM/dd') }}\n\n    - {{ $now.setLocale('en').plus(4, 'days').weekdayLong }} is {{ $now.plus(4, 'days').format('yyyy/MM/dd') }}\n\n    - {{ $now.setLocale('en').plus(5, 'days').weekdayLong }} is {{ $now.plus(5, 'days').format('yyyy/MM/dd') }}\n\n    - {{ $now.setLocale('en').plus(6, 'days').weekdayLong }} is {{ $now.plus(6, 'days').format('yyyy/MM/dd') }}\n\n  </dateAndTime> \n\n#Dados da Empresa que atua\nNome da empresa: \"O Novo Tráfego\"\nO que a empresa ofere de serviços: especializada em criação de agentes de inteligência artificial. \nHorarios de funcionamento:\nServiços disponiveis:\n\n#Critérios de Exibição:\nExibir apenas 3 horários futuros, a partir do momento atual.\n\nUtilizar o formato de data (DD/MM/AAAA) e horário (HH).\n\nNão solicitar o e-mail do cliente nesta etapa.\n\nconsiderando o momento atual e os horários de funcionamento da empresa. Exibiremos apenas horários futuros.\n##Antes de passar o horario, consulte os disponiveis ativando a função/tool <busca_evento>getAll: event</busca_evento>\n\nExemplo de Resposta:\n\n\"Horários disponíveis para hoje:\n\n📅 08:00\n\n📅 09:00\n\n📅 10:00\n\nEscolha um horario confortavel para você para prosseguir com o agendamento!\"\n\n\n#Instruções:\n- Se o horário selecionado for para o mesmo dia, confirmar o agendamento para \"hoje\".\n- Caso seja uma data futura, incluir a data e o horário do agendamento na confirmação.\n- Incluir o nome do cliente e o motivo do agendamento no título do evento do Google Calendar, por exemplo: \"Reunião - João Silva - Consultoria Inicial\". Para isso, pegue no historico da conversa a serviço pretendido.\n- Solicitar o e-mail do cliente para envio do link do evento e confirmação após a seleção do horário e motivo da reunião.\n- Dados Necessários: Nome, e-mail, data e horário do agendamento, motivo da reunião.\n- Sempre coloque o organizador do evento tambem como convidado.\n\n\n\nExemplo de Resposta para Agendamento no Mesmo Dia:\n\n\n\n\"✅ Agendamento confirmado para hoje às [horário escolhido]! 😊\"\n\nExemplo para Data Futura:\n\"✅ Agendamento confirmado para [data escolhida] às [horário escolhido]! 😊\n\nDetalhes do seu agendamento:\nEndereço se for presencial ou informar que é online\nData: [data escolhida]\nHorário: [horário escolhido]\nMotivo da Reunião: [motivo informado pelo cliente]\nLink do Evento: [incluir o link do Google Calendar]\n\nAguardamos você, caso queira tirar alguma dúvida, cancelar ou reagendar é só falar 😊\"\n\n4. Cancelar Agendamento\n\nObjetivo: Cancelar um agendamento mediante o fornecimento do e-mail do cliente.\n\nInstruções:\n- Solicitar o e-mail para cancelamentos, por questões de confirmação de segurança.\n- Buscar o evento a ser cancelado de acordo com o email fornecido usando a função/tool <busca_evento>getAll: event</busca_evento> e o obter o Event_ID do agendamento.\n\nConfirmar o cancelamento e informar o cliente com uma mensagem clara.\n\nDados Necessários: E-mail de confirmação.\nExemplo de Resposta de Cancelamento Bem-Sucedido:\n\n✅ Agendamento cancelado com sucesso em {{ $now.format('DD/MM/YYYY') }}! 😊\nCaso deseje reagendar ou tenha alguma dúvida, estamos à disposição!\n\nExemplo de Erro ao Cancelar:\n⚠️ Erro ao cancelar. Verifique o e-mail e tente novamente.\n\n#CRM\nUtilizar a função <crm_sheets> append: sheet </crm_sheets>, para salvar os dados dos clientes, após o agendamento.\nSalvar as seguintes informações: nome, motivo agendamento, data e hora do agendamento, data e hora do primeiro contato, email. </crm_sheets> "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -420,
+        220
+      ],
+      "id": "2476cadc-4c32-42fe-8cff-939d0f12a4cd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "responseFormat": "text"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -600,
+        460
+      ],
+      "id": "f0c81588-f7ed-4b74-9c3a-32a243d77a33",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ywXXQ5YhskHjZPw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -440,
+        460
+      ],
+      "id": "1172d5f7-b747-4f50-bd37-c9133f19ad59",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        40
+      ],
+      "id": "c71fe2ab-1377-4b57-8da3-7a53871117a6",
+      "name": "Wait",
+      "webhookId": "deb9356e-4d8d-407a-bef1-ace0dd3bd264"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Função para aguardar de forma assíncrona\nconst sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));\n\n// Loop sobre os itens de entrada\nfor (const item of $input.all()) {\n  // Gera um tempo aleatório entre 0 e 40 segundos (em milissegundos)\n  const randomTime = Math.floor(Math.random() * 40000);\n\n  // Adiciona o campo 'myNewField' ao JSON de cada item\n  item.json.myNewField = 1;\n\n  // Aguardar o tempo aleatório gerado antes de passar para a próxima iteração\n  await sleep(randomTime);\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        40
+      ],
+      "id": "bd88d01b-2abb-462e-a225-577c24d2d804",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "doancasottiaws@gmail.com",
+          "mode": "list",
+          "cachedResultName": "doancasottiaws@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', `data e hora que o usuário escolheu para o agendamento`, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', `30 minutos a partir da data e hora que o usuário escolheu para o agendamento`, 'string') }}",
+        "useDefaultReminders": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Use_Default_Reminders', `divida em 3 lembretes 1 lembrete 1 dia antes da data escolhida, 1 lembrete 1 hora antes do horário previsto no agendamento, 1 lembrete 30 min antes do horário previsto no agendamento`, 'boolean') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Attendees', ``, 'string') }}"
+          ],
+          "color": "2",
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', `um breve resumo da conversa e a intenção do {usuário}. `, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', `altere o titulo para o {nome do usuário}`, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -360,
+        620
+      ],
+      "id": "7f22d9e1-a018-4b4d-90c9-8d170dc539a2",
+      "name": "cria_evento",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "TGwevsJ4iVK3QS3B",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "doancasottiaws@gmail.com",
+          "mode": "list",
+          "cachedResultName": "doancasottiaws@gmail.com"
+        },
+        "limit": 10,
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', `a partir da data inicio do evento escolhido pelo usuário`, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', `período disponível com no máximo 1 semana do evento escolhido pelo usuário`, 'string') }}",
+        "options": {
+          "timeZone": {
+            "__rl": true,
+            "value": "America/Sao_Paulo",
+            "mode": "list",
+            "cachedResultName": "America/Sao_Paulo"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        600
+      ],
+      "id": "89fc05fb-74d5-4b0c-af52-776d84289fb9",
+      "name": "busca_evento",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "TGwevsJ4iVK3QS3B",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "doancasottiaws@gmail.com",
+          "mode": "list",
+          "cachedResultName": "doancasottiaws@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', `event id que deve ser excluído, gerado na conversa com o usuário`, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -120,
+        700
+      ],
+      "id": "61d3db2d-2a88-4ea7-9e12-900269d03f8e",
+      "name": "deleta_evento",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "TGwevsJ4iVK3QS3B",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "doancasottiaws@gmail.com",
+          "mode": "list",
+          "cachedResultName": "doancasottiaws@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "updateFields": {
+          "sendUpdates": "all"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        20,
+        680
+      ],
+      "id": "4b9cc9bb-8558-4f1f-a65d-994d1ff6fe73",
+      "name": "atualiza_evento",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "TGwevsJ4iVK3QS3B",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/17skjhzVpbE0katitRnZfcCW5gsngnsIkFY46eu51hZI/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17skjhzVpbE0katitRnZfcCW5gsngnsIkFY46eu51hZI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "USUARIO DO AGENDAMENTO": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('USUARIO_DO_AGENDAMENTO', `nome do usuário do agendamento`, 'string') }}",
+            "DATA DO AGENDAMENTO": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('DATA_DO_AGENDAMENTO', `data do agendamento escolhida pelo usuário `, 'string') }}",
+            "HORARIO DO AGENDAMENTO": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('HORARIO_DO_AGENDAMENTO', `horário do agendamento escolhida pelo usuário `, 'string') }}",
+            "E-MAIL DO USUARIO": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('E-MAIL_DO_USUARIO', `e-mail do usuário que fez o agendamento`, 'string') }}",
+            "ASSUNTO DO AGENDAMENTO": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ASSUNTO_DO_AGENDAMENTO', `assunto gerado na conversa do agendamento`, 'string') }}",
+            "LINK DO AGENDAMENTO (CALL)": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('LINK_DO_AGENDAMENTO__CALL_', `link da call do meet`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "USUARIO DO AGENDAMENTO",
+              "displayName": "USUARIO DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "DATA DO AGENDAMENTO",
+              "displayName": "DATA DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "HORARIO DO AGENDAMENTO",
+              "displayName": "HORARIO DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "E-MAIL DO USUARIO",
+              "displayName": "E-MAIL DO USUARIO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ASSUNTO DO AGENDAMENTO",
+              "displayName": "ASSUNTO DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LINK DO AGENDAMENTO (CALL)",
+              "displayName": "LINK DO AGENDAMENTO (CALL)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        100,
+        480
+      ],
+      "id": "b33e7489-969c-45c6-a283-ff2cef3afc51",
+      "name": "Fila de Espera (Call)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NGNykXOKme0uVul9",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/17skjhzVpbE0katitRnZfcCW5gsngnsIkFY46eu51hZI/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17skjhzVpbE0katitRnZfcCW5gsngnsIkFY46eu51hZI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "E-MAIL DO USUARIO"
+          ],
+          "schema": [
+            {
+              "id": "USUARIO DO AGENDAMENTO",
+              "displayName": "USUARIO DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "DATA DO AGENDAMENTO",
+              "displayName": "DATA DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "HORARIO DO AGENDAMENTO",
+              "displayName": "HORARIO DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E-MAIL DO USUARIO",
+              "displayName": "E-MAIL DO USUARIO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ASSUNTO DO AGENDAMENTO",
+              "displayName": "ASSUNTO DO AGENDAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LINK DO AGENDAMENTO (CALL)",
+              "displayName": "LINK DO AGENDAMENTO (CALL)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -60,
+        0
+      ],
+      "id": "459e9ec8-b856-4a50-a824-0c8184e27f43",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NGNykXOKme0uVul9",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": null,
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        220,
+        0
+      ],
+      "id": "838ec67f-17a8-40bf-8c7a-e2d3920b6fff",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zap-doan",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -860,
+        220
+      ],
+      "id": "83e53e07-8ba8-4460-ae2a-727952139229",
+      "name": "Webhook",
+      "webhookId": "5714147d-1238-4f3d-969b-ac16424ab163"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bc0e14fc-1a65-4e79-8e32-5d668b1a2898",
+              "name": "body.data.key.remoteJid",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "472bfbc0-4bca-4602-bcd3-4db32600f589",
+              "name": "",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "36b0bb86-cf38-4324-9a1e-cfda3459563e",
+              "name": "",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        220
+      ],
+      "id": "51edf816-4e35-4439-8e80-dbd93be87c4c",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.alisriosti.com.br",
+            "user-agent": "axios/1.7.9",
+            "content-length": "942",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "184.73.106.51",
+            "x-forwarded-host": "n8n.alisriosti.com.br",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "26b2f4c49a6e",
+            "x-real-ip": "184.73.106.51"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event": "messages.upsert",
+            "instance": "Doan-Cell",
+            "data": {
+              "key": {
+                "remoteJid": "5516981083358@s.whatsapp.net",
+                "fromMe": false,
+                "id": "3F065F49EEF53D87DEC4"
+              },
+              "pushName": "Alisson Ricardo Rios",
+              "status": "DELIVERY_ACK",
+              "message": {
+                "messageContextInfo": {
+                  "deviceListMetadata": {
+                    "senderKeyHash": "cPXEjOeADm6zzw==",
+                    "senderTimestamp": "1742465285",
+                    "recipientKeyHash": "UJSGwfOOrZ/yBQ==",
+                    "recipientTimestamp": "1742416835"
+                  },
+                  "deviceListMetadataVersion": 2
+                },
+                "conversation": "vai galinhas"
+              },
+              "contextInfo": {
+                "expiration": 0,
+                "ephemeralSettingTimestamp": "0",
+                "disappearingMode": {
+                  "initiator": "CHANGED_IN_CHAT"
+                }
+              },
+              "messageType": "conversation",
+              "messageTimestamp": 1742597909,
+              "instanceId": "c78cc144-fcce-4006-886b-72706be303b3",
+              "source": "unknown"
+            },
+            "destination": "https://n8n.alisriosti.com.br/webhook-test/zap-doan",
+            "date_time": "2025-03-21T19:58:29.635Z",
+            "sender": "5527998316931@s.whatsapp.net",
+            "server_url": "http://localhost:8080",
+            "apikey": "C58ECD0D913E-420E-A660-C8DA464E5A1A"
+          },
+          "webhookUrl": "https://n8n.alisriosti.com.br/webhook-test/zap-doan",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cria_evento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "busca_evento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deleta_evento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualiza_evento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fila de Espera (Call)": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4a7fac5b-c89b-4234-94af-404e776a8a2a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "683f44f5f6cb6b5815de9715782d98e1177d70aef5c00174ff6a7b49187af4ce"
+  },
+  "id": "JtMjCGmaaYBwZLaO",
+  "tags": [
+    {
+      "createdAt": "2025-03-11T19:54:49.072Z",
+      "updatedAt": "2025-03-11T19:55:10.981Z",
+      "id": "hAS0Qu6dSo36qrSG",
+      "name": "Doan-Alisson-Jovando"
+    }
+  ]
+}
