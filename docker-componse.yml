@@ -1,0 +1,120 @@
+services:
+  evolution-api:
+    container_name: evolution_api
+    image: atendai/evolution-api:v2.2.2
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - evolution-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evolution-api.rule=Host(`evolution-api.alisriosti.com.br`)"
+      - "traefik.http.routers.evolution-api.entrypoints=websecure"
+      - "traefik.http.routers.evolution-api.tls.certresolver=myresolver"
+      - "traefik.http.services.evolution-api.loadbalancer.server.port=8080"
+
+  redis:
+    image: redis:latest
+    networks:
+      - evolution-net
+    container_name: redis
+    command: >
+      redis-server --port 6379 --appendonly yes
+    volumes:
+      - evolution_redis:/data
+    ports:
+      - 6379:6379
+    env_file:
+      - .env
+
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    networks:
+      - evolution-net
+    command: ["postgres", "-c", "max_connections=1000"]
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=123456
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - 5432
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    networks:
+      - evolution-net
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=alisrios@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=dmk7nvs1vz@alisrios  
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - 4000:80
+    links:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.alisriosti.com.br`)"
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls.certresolver=myresolver"
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - evolution-net
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.alisriosti.com.br`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=myresolver"
+
+  traefik:
+    image: traefik:v2.5
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=alisrios@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt:/letsencrypt"
+    networks:
+      - evolution-net
+
+volumes:
+  evolution_instances:
+  postgres_data:
+  pgadmin_data:
+  evolution_redis:
+  n8n_data:
+  letsencrypt:
+
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge
